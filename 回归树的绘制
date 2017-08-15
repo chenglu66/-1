@@ -1,0 +1,97 @@
+from numpy import *  
+  
+from tkinter import *  
+import regTrees  
+  
+import matplotlib  
+matplotlib.use('TkAgg')  
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  
+from matplotlib.figure import Figure  
+  
+#作用：重绘新面板  
+#输入：容许的误差下降值，切分的最少样本数  
+#输出：无  
+def reDraw(tolS, tolN):  
+    reDraw.f.clf()  
+    reDraw.a = reDraw.f.add_subplot(111)  
+    #检查复选框是否选中  
+    if chkBtnVar.get():#复选框被选中，执行模型树  
+        if tolN < 2:#切分的最少样本数不能少于2  
+            tolN = 2  
+        myTree = regTrees.createTree(reDraw.rawDat, regTrees.modelLeaf, regTrees.modelErr, (tolS, tolN))  
+        yHat = regTrees.createForeCast(myTree, reDraw.testDat, regTrees.modelTreeEval)  
+    else:#复选框没被选中，执行会归树  
+        myTree = regTrees.createTree(reDraw.rawDat, ops = (tolS, tolN))  
+        yHat = regTrees.createForeCast(myTree, reDraw.testDat)  
+    #绘制sine.txt中的点  
+    reDraw.a.scatter(reDraw.rawDat[:, 0], reDraw.rawDat[:, 1], s = 5)  
+    #绘制得到的直线  
+    reDraw.a.plot(reDraw.testDat, yHat, linewidth = 2.0)  
+    reDraw.canvas.show()  
+  
+#作用：得到tolN和tolS的取值  
+#输入：无  
+#输出：无  
+def getInputs():  
+    # 得到tolN的取值  
+    try:  
+        tolN = int(tolNentry.get())  
+    except:  
+        tolN = 10  
+        print ("enter Integer for tolN")  
+        tolNentry.delete(0, END)  
+        tolNentry.insert(0, '10')  
+    # 得到tolS的取值  
+    try:  
+        tolS = float(tolSentry.get())  
+    except:  
+        tolS = 1.0  
+        print ("enter Float for tolS" ) 
+        tolSentry.delete(0, END)  
+        tolSentry.insert(0, '1.0')  
+    return tolN, tolS  
+  
+#作用：绘制新的树  
+#输入：无  
+#输出：无  
+def drawNewTree():  
+    tolN, tolS = getInputs()  
+    reDraw(tolS, tolN)  
+  
+root = Tk()  
+#绘制主面板  
+reDraw.f = Figure(figsize = (5, 4), dpi = 100)  
+reDraw.canvas = FigureCanvasTkAgg(reDraw.f, master = root)  
+reDraw.canvas.show()  
+reDraw.canvas.get_tk_widget().grid(row = 0, columnspan = 3)  
+  
+#创建退出按钮  
+#Button(root, text = "Quit", fg = 'black', command = root.quit).grid(row = 1, column = 2)  
+#插入标题标签  
+#Label(root, text = "Plot Place Holder").grid(row = 0, columnspan = 3)  
+#插入tolN标签  
+Label(root, text = "tolN").grid(row = 1, column = 0)  
+#插入tolN文本框  
+tolNentry = Entry(root)  
+tolNentry.grid(row = 1, column = 1)  
+tolNentry.insert(0, '10')  
+#插入tolS标签  
+Label(root, text = "tolS").grid(row = 2, column = 0)  
+#插入tolS文本框  
+tolSentry = Entry(root)  
+tolSentry.grid(row = 2, column = 1)  
+tolSentry.insert(0, '1.0')  
+#创建ReDraw按钮  
+Button(root, text = "ReDraw", command = drawNewTree).grid(row = 1, column = 2, rowspan = 3)  
+#创建按钮勾选状态变量  
+chkBtnVar = IntVar()  
+#创建Model Tree按钮  
+chkBtn = Checkbutton(root, text = "Model Tree", variable = chkBtnVar)  
+chkBtn.grid(row = 3, column = 0, columnspan = 2)  
+#sine.txt中的数据集  
+reDraw.rawDat = mat(regTrees.loadDataSet('exp2.txt'))  
+#sine.txt第一行即x轴的最大值到最小值  
+reDraw.testDat = arange(min(reDraw.rawDat[:, 0]), max(reDraw.rawDat[:, 0]), 0.01)  
+reDraw(1.0, 10)  
+  
+root.mainloop()  
